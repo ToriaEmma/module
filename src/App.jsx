@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import ModulesPage from '@/pages/ModulesPage';
 import ModuleDetailPage from '@/pages/ModuleDetailPage';
-import ExercisePage from '@/pages/ExercisePage';
+import ExercisePage from '@/pages/ExercicesPage';
 
 function App() {
   return (
