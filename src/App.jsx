@@ -11,6 +11,7 @@ function App() {
       <div className="min-h-screen">
         <Routes>
           <Route path="/" element={<ModulesPage />} />
+          <Route path="/:levelSlug" element={<ModulesPage />} />
           <Route path="/module/:id" element={<ModuleDetailPage />} />
           <Route path="/module/:id/exercise/:exerciseId" element={<ExercisePage />} />
         </Routes>

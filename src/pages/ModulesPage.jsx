@@ -4,12 +4,14 @@ import { motion } from 'framer-motion';
 import { BookOpen, Sparkles } from 'lucide-react';
 import ModuleCard from '@/components/Modulescard';
 import SearchAndFilters from '@/components/SearchAndFilters';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 
 const ModulesPage = () => {
   const [modules, setModules] = useState([]);
   const [filteredModules, setFilteredModules] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { levelSlug } = useParams();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     level: null,
@@ -100,15 +102,25 @@ const ModulesPage = () => {
     const short = searchParams.get('short'); // '1' or '0'
     const fav = searchParams.get('fav'); // comma-separated ids
 
+    // Helpers to convert between slug and label
+    const slugToLevel = (slug) => {
+      if (!slug) return null;
+      const s = slug.toLowerCase();
+      if (s === 'debutant') return 'Débutant';
+      if (s === 'intermediaire') return 'Intermédiaire';
+      if (s === 'avance' || s === 'avancé') return 'Avancé';
+      return null;
+    };
+
     setSearchTerm(q);
     setFilters({
-      level: level || null,
+      level: level || slugToLevel(levelSlug) || null,
       category: category || null,
       shortDuration: short === '1',
     });
     const favList = (fav ? fav.split(',') : []).map((v) => Number(v)).filter((n) => !Number.isNaN(n));
     setFavorites(favList);
-  }, [searchParams]);
+  }, [searchParams, levelSlug]);
 
   // Filter and search logic
   useEffect(() => {
@@ -158,7 +170,22 @@ const ModulesPage = () => {
     if (nextFilters.level) next.set('level', nextFilters.level); else next.delete('level');
     if (nextFilters.category) next.set('category', nextFilters.category); else next.delete('category');
     if (nextFilters.shortDuration) next.set('short', '1'); else next.delete('short');
-    setSearchParams(next);
+    // If level changed, update pathname to slug
+    const levelToSlug = (lvl) => {
+      if (!lvl) return '';
+      const map = {
+        'Débutant': 'debutant',
+        'Intermédiaire': 'intermediaire',
+        'Avancé': 'avance',
+      };
+      return map[lvl] || '';
+    };
+
+    const slug = levelToSlug(nextFilters.level);
+    const basePath = slug ? `/${slug}` : '/';
+    const query = next.toString();
+    const full = query ? `${basePath}?${query}` : basePath;
+    navigate(full);
   };
 
   const handleFavoriteToggle = (id) => {
