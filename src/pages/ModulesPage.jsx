@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { BookOpen, Sparkles } from 'lucide-react';
-import ModuleCard from '@/components/ModuleCard';
+import ModuleCard from '@/components/Modulescard';
 import SearchAndFilters from '@/components/SearchAndFilters';
 
 const ModulesPage = () => {

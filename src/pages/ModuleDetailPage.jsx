@@ -19,8 +19,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 
-const ExercisePage = () => {
-  const { id, exerciseId } = useParams();
+const ModuleDetailPage = () => {
+  const { id, exerciseId: exerciseIdParam } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [exercise, setExercise] = useState(null);
@@ -37,7 +37,7 @@ const ExercisePage = () => {
   useEffect(() => {
     // Mock exercise data
     const mockExercise = {
-      id: parseInt(exerciseId),
+      id: parseInt(exerciseIdParam || '1'),
       title: "Construisez une navigation responsive",
       description: "Créez une barre de navigation qui s'adapte aux différentes tailles d'écran en utilisant HTML et CSS.",
       instructions: [
@@ -64,7 +64,7 @@ const ExercisePage = () => {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [exerciseId]);
+  }, [exerciseIdParam]);
 
   const handleValidate = () => {
     // Simulate validation
@@ -207,7 +207,7 @@ const ExercisePage = () => {
                 Module {id}
               </button>
               <ChevronRight className="w-4 h-4" />
-              <span className="text-white">Exercice {exerciseId}</span>
+              <span className="text-white">Exercice {exerciseIdParam || '1'}</span>
             </div>
 
             {/* Back button */}
@@ -469,4 +469,4 @@ const ExercisePage = () => {
   );
 };
 
-export default ExercisePage;
+export default ModuleDetailPage;
