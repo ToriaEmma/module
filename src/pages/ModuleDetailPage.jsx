@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { 
@@ -22,6 +22,7 @@ import { useToast } from '@/components/ui/use-toast';
 const ModuleDetailPage = () => {
   const { id, exerciseId: exerciseIdParam } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const [exercise, setExercise] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -57,6 +58,19 @@ const ModuleDetailPage = () => {
     };
 
     setExercise(mockExercise);
+    // Restore state from URL
+    const stepFromUrl = Number(searchParams.get('step'));
+    const hintsFromUrl = Number(searchParams.get('hints'));
+    const completedFromUrl = searchParams.get('completed') === '1';
+    if (!Number.isNaN(stepFromUrl) && stepFromUrl >= 1) {
+      setCurrentStep(Math.min(stepFromUrl, totalSteps));
+    }
+    if (!Number.isNaN(hintsFromUrl) && hintsFromUrl >= 0) {
+      setHintsUsed(Math.min(hintsFromUrl, maxHints));
+    }
+    if (completedFromUrl) {
+      setIsCompleted(true);
+    }
     
     // Auto-save simulation
     const interval = setInterval(() => {
@@ -74,6 +88,9 @@ const ModuleDetailPage = () => {
       setIsCompleted(true);
       const earnedPoints = 20 + (maxHints - hintsUsed) * 5; // Bonus for not using hints
       setPoints(earnedPoints);
+      const next = new URLSearchParams(searchParams.toString());
+      next.set('completed', '1');
+      setSearchParams(next);
       
       // Check for badges
       const newBadges = [];
@@ -116,6 +133,11 @@ const ModuleDetailPage = () => {
     setUserCode('');
     setPoints(0);
     setBadges([]);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('completed');
+    next.delete('step');
+    next.delete('hints');
+    setSearchParams(next);
     toast({
       title: "Exercice réinitialisé",
       description: "Vous pouvez recommencer l'exercice."
@@ -133,7 +155,11 @@ const ModuleDetailPage = () => {
     }
 
     const hint = exercise.hints[hintsUsed];
-    setHintsUsed(hintsUsed + 1);
+    const newHints = Math.min(hintsUsed + 1, maxHints);
+    setHintsUsed(newHints);
+    const next = new URLSearchParams(searchParams.toString());
+    next.set('hints', String(newHints));
+    setSearchParams(next);
     
     toast({
       title: `Indice ${hintsUsed + 1} :`,
@@ -154,10 +180,14 @@ const ModuleDetailPage = () => {
 
   const handleNextStep = () => {
     if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+      const newStep = currentStep + 1;
+      setCurrentStep(newStep);
+      const next = new URLSearchParams(searchParams.toString());
+      next.set('step', String(newStep));
+      setSearchParams(next);
       toast({
         title: "Presque fini !",
-        description: `Étape ${currentStep + 1}/${totalSteps}`
+        description: `Étape ${newStep}/${totalSteps}`
       });
     }
   };

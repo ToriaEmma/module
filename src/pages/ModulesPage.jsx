@@ -10,7 +10,7 @@ const ModulesPage = () => {
   const [modules, setModules] = useState([]);
   const [filteredModules, setFilteredModules] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
-  const { levelSlug } = useParams();
+  const { levelSlug, categorySlug, kind, term } = useParams();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
@@ -94,7 +94,7 @@ const ModulesPage = () => {
     setFilteredModules(mockModules);
   }, []);
 
-  // Initialize from URL params on mount or when searchParams change
+  // Initialize from URL params and path segments on mount or when they change
   useEffect(() => {
     const q = searchParams.get('q') || '';
     const level = searchParams.get('level'); // expects values like "Débutant", "Intermédiaire", "Avancé"
@@ -111,16 +111,27 @@ const ModulesPage = () => {
       if (s === 'avance' || s === 'avancé') return 'Avancé';
       return null;
     };
+    const slugToCategory = (slug) => {
+      if (!slug) return null;
+      const s = slug.toLowerCase();
+      if (s === 'developpement' || s === 'développement') return 'Développement';
+      if (s === 'design') return 'Design';
+      if (s === 'marketing') return 'Marketing';
+      if (s === 'business') return 'Business';
+      return null;
+    };
 
-    setSearchTerm(q);
+    // Prefer path segment over query param if present
+    const termFromPath = term ? decodeURIComponent(term) : q;
+    setSearchTerm(termFromPath);
     setFilters({
       level: level || slugToLevel(levelSlug) || null,
-      category: category || null,
-      shortDuration: short === '1',
+      category: category || slugToCategory(categorySlug) || null,
+      shortDuration: typeof kind !== 'undefined' ? kind.toLowerCase() === 'court' : short === '1',
     });
     const favList = (fav ? fav.split(',') : []).map((v) => Number(v)).filter((n) => !Number.isNaN(n));
     setFavorites(favList);
-  }, [searchParams, levelSlug]);
+  }, [searchParams, levelSlug, categorySlug, kind, term]);
 
   // Filter and search logic
   useEffect(() => {
@@ -160,8 +171,17 @@ const ModulesPage = () => {
   const handleSearch = (value) => {
     setSearchTerm(value);
     const next = new URLSearchParams(searchParams.toString());
-    if (value) next.set('q', value); else next.delete('q');
-    setSearchParams(next);
+    if (value) {
+      next.set('q', value);
+      const full = `/recherche/${encodeURIComponent(value)}${next.toString() ? `?${next.toString()}` : ''}`;
+      navigate(full);
+    } else {
+      next.delete('q');
+      // If search cleared, go back to current level/category/duration path if any, else '/'
+      const base = levelSlug ? `/${levelSlug}` : categorySlug ? `/categorie/${categorySlug}` : kind ? `/duree/${kind}` : '/';
+      const query = next.toString();
+      navigate(query ? `${base}?${query}` : base);
+    }
   };
 
   const handleFilter = (nextFilters) => {
@@ -170,7 +190,7 @@ const ModulesPage = () => {
     if (nextFilters.level) next.set('level', nextFilters.level); else next.delete('level');
     if (nextFilters.category) next.set('category', nextFilters.category); else next.delete('category');
     if (nextFilters.shortDuration) next.set('short', '1'); else next.delete('short');
-    // If level changed, update pathname to slug
+    // If level/category/duration changed, update pathname to the corresponding pretty path
     const levelToSlug = (lvl) => {
       if (!lvl) return '';
       const map = {
@@ -180,9 +200,25 @@ const ModulesPage = () => {
       };
       return map[lvl] || '';
     };
+    const categoryToSlug = (cat) => {
+      if (!cat) return '';
+      const map = {
+        'Développement': 'developpement',
+        'Design': 'design',
+        'Marketing': 'marketing',
+        'Business': 'business',
+      };
+      return map[cat] || '';
+    };
 
-    const slug = levelToSlug(nextFilters.level);
-    const basePath = slug ? `/${slug}` : '/';
+    let basePath = '/';
+    if (nextFilters.level) {
+      basePath = `/${levelToSlug(nextFilters.level)}`;
+    } else if (nextFilters.category) {
+      basePath = `/categorie/${categoryToSlug(nextFilters.category)}`;
+    } else if (nextFilters.shortDuration) {
+      basePath = `/duree/court`;
+    }
     const query = next.toString();
     const full = query ? `${basePath}?${query}` : basePath;
     navigate(full);
