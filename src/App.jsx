@@ -17,6 +17,7 @@ function App() {
           <Route path="/recherche/:term" element={<ModulesPage />} />
           <Route path="/module/:id" element={<ModuleDetailPage />} />
           <Route path="/module/:id/exercise/:exerciseId" element={<ExercisePage />} />
+          <Route path="*" element={<ModulesPage />} />
         </Routes>
         <Toaster />
       </div>
