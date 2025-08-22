@@ -1,44 +1,38 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 
-const SearchAndFilters = ({ onSearch, onFilter, filters }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLevel, setSelectedLevel] = useState('Tous');
-  const [selectedCategory, setSelectedCategory] = useState('Tous');
-  const [shortDuration, setShortDuration] = useState(false);
+const SearchAndFilters = ({
+  onSearch,
+  onFilter,
+  filters,
+  searchTerm = '',
+  selectedLevel = 'Tous',
+  selectedCategory = 'Tous',
+  shortDuration = false,
+}) => {
 
   const handleSearch = (value) => {
-    setSearchTerm(value);
     onSearch(value);
   };
 
   const handleLevelChange = (level) => {
-    setSelectedLevel(level);
     onFilter({ ...filters, level: level === 'Tous' ? null : level });
   };
 
   const handleCategoryChange = (e) => {
     const category = e.target.value;
-    setSelectedCategory(category);
     onFilter({ ...filters, category: category === 'Tous' ? null : category });
   };
 
   const handleDurationToggle = () => {
-    const newValue = !shortDuration;
-    setShortDuration(newValue);
-    onFilter({ ...filters, shortDuration: newValue });
+    onFilter({ ...filters, shortDuration: !shortDuration });
   };
 
   const clearFilters = () => {
-    setSelectedLevel('Tous');
-    setSelectedCategory('Tous');
-    setShortDuration(false);
-    setSearchTerm('');
     onSearch('');
     onFilter({ level: null, category: null, shortDuration: false });
   };

@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 
-const ModuleCard = ({ module, index }) => {
+const ModuleCard = ({ module, index, isFavorite = false, onFavorite }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -20,9 +20,12 @@ const ModuleCard = ({ module, index }) => {
   };
 
   const handleFavorite = () => {
+    if (onFavorite) {
+      onFavorite(module.id);
+    }
     toast({
-      title: "Module ajouté aux favoris.",
-      description: `${module.title} a été ajouté à vos favoris.`,
+      title: isFavorite ? "Module retiré des favoris." : "Module ajouté aux favoris.",
+      description: `${module.title} ${isFavorite ? 'a été retiré de' : 'a été ajouté à'} vos favoris.`,
     });
   };
 
@@ -61,8 +64,12 @@ const ModuleCard = ({ module, index }) => {
         </div>
         <button
           onClick={handleFavorite}
-          className="text-gray-400 hover:text-yellow-400 transition-colors"
-          aria-label={`Ajouter ${module.title} aux favoris`}
+          className={
+            isFavorite
+              ? "text-yellow-400 drop-shadow hover:text-yellow-300 transition-colors"
+              : "text-gray-400 hover:text-yellow-400 transition-colors"
+          }
+          aria-label={`${isFavorite ? 'Retirer' : 'Ajouter'} ${module.title} ${isFavorite ? 'des' : 'aux'} favoris`}
         >
           <Star className="w-5 h-5" />
         </button>

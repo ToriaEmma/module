@@ -4,16 +4,19 @@ import { motion } from 'framer-motion';
 import { BookOpen, Sparkles } from 'lucide-react';
 import ModuleCard from '@/components/Modulescard';
 import SearchAndFilters from '@/components/SearchAndFilters';
+import { useSearchParams } from 'react-router-dom';
 
 const ModulesPage = () => {
   const [modules, setModules] = useState([]);
   const [filteredModules, setFilteredModules] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     level: null,
     category: null,
     shortDuration: false
   });
+  const [favorites, setFavorites] = useState([]); // array of ids
 
   // Mock data
   useEffect(() => {
@@ -89,6 +92,24 @@ const ModulesPage = () => {
     setFilteredModules(mockModules);
   }, []);
 
+  // Initialize from URL params on mount or when searchParams change
+  useEffect(() => {
+    const q = searchParams.get('q') || '';
+    const level = searchParams.get('level'); // expects values like "Débutant", "Intermédiaire", "Avancé"
+    const category = searchParams.get('category');
+    const short = searchParams.get('short'); // '1' or '0'
+    const fav = searchParams.get('fav'); // comma-separated ids
+
+    setSearchTerm(q);
+    setFilters({
+      level: level || null,
+      category: category || null,
+      shortDuration: short === '1',
+    });
+    const favList = (fav ? fav.split(',') : []).map((v) => Number(v)).filter((n) => !Number.isNaN(n));
+    setFavorites(favList);
+  }, [searchParams]);
+
   // Filter and search logic
   useEffect(() => {
     let filtered = modules;
@@ -122,6 +143,33 @@ const ModulesPage = () => {
 
     setFilteredModules(filtered);
   }, [modules, searchTerm, filters]);
+
+  // Handlers that also sync URL
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    const next = new URLSearchParams(searchParams.toString());
+    if (value) next.set('q', value); else next.delete('q');
+    setSearchParams(next);
+  };
+
+  const handleFilter = (nextFilters) => {
+    setFilters(nextFilters);
+    const next = new URLSearchParams(searchParams.toString());
+    if (nextFilters.level) next.set('level', nextFilters.level); else next.delete('level');
+    if (nextFilters.category) next.set('category', nextFilters.category); else next.delete('category');
+    if (nextFilters.shortDuration) next.set('short', '1'); else next.delete('short');
+    setSearchParams(next);
+  };
+
+  const handleFavoriteToggle = (id) => {
+    const nextFavs = favorites.includes(id)
+      ? favorites.filter((x) => x !== id)
+      : [...favorites, id];
+    setFavorites(nextFavs);
+    const next = new URLSearchParams(searchParams.toString());
+    if (nextFavs.length) next.set('fav', nextFavs.join(',')); else next.delete('fav');
+    setSearchParams(next);
+  };
 
   return (
     <>
@@ -158,9 +206,13 @@ const ModulesPage = () => {
 
           {/* Search and Filters */}
           <SearchAndFilters
-            onSearch={setSearchTerm}
-            onFilter={setFilters}
+            onSearch={handleSearch}
+            onFilter={handleFilter}
             filters={filters}
+            searchTerm={searchTerm}
+            selectedLevel={filters.level || 'Tous'}
+            selectedCategory={filters.category || 'Tous'}
+            shortDuration={filters.shortDuration}
           />
 
           {/* Modules Grid */}
@@ -172,7 +224,13 @@ const ModulesPage = () => {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
               {filteredModules.map((module, index) => (
-                <ModuleCard key={module.id} module={module} index={index} />
+                <ModuleCard
+                  key={module.id}
+                  module={module}
+                  index={index}
+                  isFavorite={favorites.includes(module.id)}
+                  onFavorite={handleFavoriteToggle}
+                />
               ))}
             </motion.div>
           ) : (
